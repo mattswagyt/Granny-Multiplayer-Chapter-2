@@ -1,11 +1,13 @@
 -- Roblox Lua Script for "Granny Multiplayer - Chapter 2" Map (By BMF)
 -- Script handles a draggable UI with multiple functionalities
 
--- Variables
+-- Services
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 local StarterGui = game:GetService("StarterGui")
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
@@ -13,7 +15,6 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
-local LocationLabel = Instance.new("TextLabel")
 local ErrorLog = Instance.new("TextLabel")
 local UIListLayout = Instance.new("UIListLayout")
 
@@ -50,6 +51,7 @@ ErrorLog.TextYAlignment = Enum.TextYAlignment.Top
 
 UIListLayout.Parent = MainFrame
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 5)
 
 -- Toggle UI with Delete key
 UIS.InputBegan:Connect(function(input, processed)
@@ -74,63 +76,38 @@ local function createButton(name, callback)
     return Button
 end
 
+-- Loaders
 createButton("Infinite Yield", function()
-    local success, result = pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-    end)
-    if success then
-        print("Infinite Yield executed!")
-    else
-        print("Error executing Infinite Yield")
-    end
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+    print("Infinite Yield executed!")
 end)
 
 createButton("Dex Explorer", function()
-    local success, result = pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()
-    end)
-    if success then
-        print("Dex Explorer executed!")
-    else
-        print("Error executing Dex Explorer")
-    end
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()
+    print("Dex Explorer executed!")
 end)
 
--- ✅ Notification when script loads
+-- Notification on script load
 StarterGui:SetCore("SendNotification", {
     Title = "Granny Script Loaded!";
     Text = "All features are ready.";
-    Duration = 10;
+    Duration = 10
 })
 
--- ✅ ESP helper
-local function highlightTarget(target, color)
-    local highlight = Instance.new("Highlight")
-    highlight.Adornee = target
-    highlight.FillColor = color
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    highlight.FillTransparency = 0.5
-    highlight.OutlineTransparency = 0
-    highlight.Parent = target
-end
-
--- ✅ Tracer helper
+-- ESP Helpers
 local function createTracer(target, color)
-    local RunService = game:GetService("RunService")
-    local camera = workspace.CurrentCamera
     local line = Drawing.new("Line")
     line.Visible = true
     line.Color = color
     line.Thickness = 2
 
-    -- Update tracer position every frame
     local connection
     connection = RunService.RenderStepped:Connect(function()
         if target and target:FindFirstChild("HumanoidRootPart") and target:FindFirstChildOfClass("Humanoid") then
-            local hrp = target:FindFirstChild("HumanoidRootPart")
-            local pos, onScreen = camera:WorldToViewportPoint(hrp.Position)
+            local hrp = target.HumanoidRootPart
+            local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(hrp.Position)
             if onScreen then
-                line.From = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y) -- from bottom center of screen
+                line.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
                 line.To = Vector2.new(pos.X, pos.Y)
                 line.Visible = true
             else
@@ -144,7 +121,6 @@ local function createTracer(target, color)
     end)
 end
 
--- ✅ Floating Name helper
 local function createNameTag(target, text, color)
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "NameTag"
@@ -165,22 +141,18 @@ local function createNameTag(target, text, color)
     label.Parent = billboard
 end
 
-
--- ✅ Add Buttons Below
-
+-- ✅ Granny ESP
 createButton("Granny ESP", function()
     local granny = nil
-
     for i = 1, 5 do
-        local preset = workspace:FindFirstChild("Preset" .. i)
+        local preset = workspace:FindFirstChild("Preset"..i)
         if preset and preset:FindFirstChild("Locks") and preset.Locks:FindFirstChild("Granny") then
             granny = preset.Locks.Granny
             break
         end
     end
 
-    if granny and granny:IsA("Model") then
-        -- Highlight
+    if granny then
         if not granny:FindFirstChildOfClass("Highlight") then
             local highlight = Instance.new("Highlight")
             highlight.Name = "GrannyESP"
@@ -188,14 +160,10 @@ createButton("Granny ESP", function()
             highlight.Adornee = granny
             highlight.FillTransparency = 1
             highlight.OutlineTransparency = 0
-            highlight.OutlineColor = Color3.fromRGB(255, 0, 0) -- Red
+            highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
             highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         end
-
-        -- Tracer
         createTracer(granny, Color3.fromRGB(255, 0, 0))
-
-        -- Name Tag
         if not granny:FindFirstChild("NameTag") then
             createNameTag(granny, "Granny", Color3.fromRGB(255, 0, 0))
         end
@@ -204,20 +172,18 @@ createButton("Granny ESP", function()
     end
 end)
 
+-- ✅ Grandpa ESP
 createButton("Grandpa ESP", function()
     local grandpa = nil
-
-    -- Search through Preset1–Preset5 for Grandpa
     for i = 1, 5 do
-        local preset = workspace:FindFirstChild("Preset" .. i)
+        local preset = workspace:FindFirstChild("Preset"..i)
         if preset and preset:FindFirstChild("Locks") and preset.Locks:FindFirstChild("Grandpa") then
             grandpa = preset.Locks.Grandpa
             break
         end
     end
 
-    if grandpa and grandpa:IsA("Model") then
-        -- Highlight (green)
+    if grandpa then
         if not grandpa:FindFirstChildOfClass("Highlight") then
             local highlight = Instance.new("Highlight")
             highlight.Name = "GrandpaESP"
@@ -225,14 +191,10 @@ createButton("Grandpa ESP", function()
             highlight.Adornee = grandpa
             highlight.FillTransparency = 1
             highlight.OutlineTransparency = 0
-            highlight.OutlineColor = Color3.fromRGB(0, 255, 0) -- Green
+            highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
             highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         end
-
-        -- Tracer (green)
         createTracer(grandpa, Color3.fromRGB(0, 255, 0))
-
-        -- Name Tag (green)
         if not grandpa:FindFirstChild("NameTag") then
             createNameTag(grandpa, "Grandpa", Color3.fromRGB(0, 255, 0))
         end
@@ -241,39 +203,22 @@ createButton("Grandpa ESP", function()
     end
 end)
 
+-- ✅ Item ESP for Granny Chapter 2
 createButton("Item ESP", function()
     local itemNames = {
-        "Boat key",
-        "Boat steering wheel",
-        "Crowbar",
-        "Cutting pliers",
-        "Door handle",
-        "Door lock",
-        "Duct tape",
-        "Gasoline can",
-        "Glass fuse",
-        "Hand wheel",
-        "Helicopter key",
-        "Padlock key",
-        "Safe key",
-        "Spark plug",
-        "Special key",
-        "Stun gun",
-        "Weapon key",
-        "Wrench"
+        "Boat key","Boat steering wheel","Crowbar","Cutting pliers","Door handle","Door lock",
+        "Duct tape","Gasoline can","Glass fuse","Hand wheel","Helicopter key",
+        "Padlock key","Safe key","Spark plug","Special key","Stun gun","Weapon key","Wrench"
     }
-
-    local color = Color3.fromRGB(0, 170, 255) -- Light blue ESP color for items
+    local color = Color3.fromRGB(0, 170, 255)
     local foundCount = 0
 
-    -- Scan Preset1–Preset10 for listed items
     for i = 1, 10 do
-        local preset = workspace:FindFirstChild("Preset" .. i)
+        local preset = workspace:FindFirstChild("Preset"..i)
         if preset then
             for _, itemName in ipairs(itemNames) do
                 local item = preset:FindFirstChild(itemName, true)
-                if item and item:IsA("Model") or item:IsA("Part") then
-                    -- Apply highlight
+                if item and (item:IsA("Part") or item:IsA("Model")) then
                     if not item:FindFirstChildOfClass("Highlight") then
                         local highlight = Instance.new("Highlight")
                         highlight.Name = "ItemESP"
@@ -284,35 +229,29 @@ createButton("Item ESP", function()
                         highlight.OutlineColor = color
                         highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                     end
-
-                    -- Create name tag
                     if not item:FindFirstChild("NameTag") then
                         createNameTag(item, itemName, color)
                     end
-
-                    -- Tracer
                     createTracer(item, color)
                     foundCount += 1
                 end
             end
         end
     end
-
     print("Item ESP applied to " .. foundCount .. " items.")
 end)
 
-
+-- ✅ Get All Items
 createButton("Get All Items", function()
-    local player = game.Players.LocalPlayer
-    local backpack = player:FindFirstChild("Backpack")
+    local player = LocalPlayer
+    local backpack = player:FindFirstChild("Backpack") or Instance.new("Folder", player)
+    backpack.Name = "Backpack"
     local character = player.Character or player.CharacterAdded:Wait()
 
-    -- ✅ Helper: check if player already has tool
     local function hasTool(toolName)
         return backpack:FindFirstChild(toolName) or character:FindFirstChild(toolName)
     end
 
-    -- ✅ Helper: try to fire or clone item
     local function obtainItem(item)
         if not item then return end
         if item:FindFirstChild("InteractRemote") then
@@ -328,9 +267,8 @@ createButton("Get All Items", function()
         task.wait(0.1)
     end
 
-    -- ✅ Step 1: Grab interactable items from all Presets
     for i = 1, 10 do
-        local preset = workspace:FindFirstChild("Preset" .. i)
+        local preset = workspace:FindFirstChild("Preset"..i)
         if preset then
             for _, item in pairs(preset:GetChildren()) do
                 if item:FindFirstChild("InteractRemote") then
@@ -338,14 +276,14 @@ createButton("Get All Items", function()
                 end
             end
         end
-    end)
+    end
+end)
 
+-- ✅ Granny Ignores You
 createButton("Granny Ignores You", function()
-    local grannyFolder = nil
-    local foundPresetIndex = nil  -- ✅ store which preset Granny was found in
-
+    local grannyFolder, foundPresetIndex = nil, nil
     for i = 1, 5 do
-        local preset = workspace:FindFirstChild("Preset" .. i)
+        local preset = workspace:FindFirstChild("Preset"..i)
         if preset and preset:FindFirstChild("Locks") and preset.Locks:FindFirstChild("Granny") then
             grannyFolder = preset.Locks.Granny
             foundPresetIndex = i
@@ -354,39 +292,27 @@ createButton("Granny Ignores You", function()
     end
 
     if grannyFolder then
-        local toDestroy = {
-            "CameraJumpscare1",
-            "CameraJumpscare2",
-            "Jumpscare"
-        }
-
-        for _, name in ipairs(toDestroy) do
+        for _, name in ipairs({"CameraJumpscare1","CameraJumpscare2","Jumpscare"}) do
             local obj = grannyFolder:FindFirstChild(name)
-            if obj then
-                obj:Destroy()
-            end
+            if obj then obj:Destroy() end
         end
-
-        -- ✅ Use foundPresetIndex safely here
         if foundPresetIndex then
-            local attackPath = workspace:FindFirstChild("Preset" .. foundPresetIndex)
+            local attackPath = workspace:FindFirstChild("Preset"..foundPresetIndex)
             if attackPath and attackPath:FindFirstChild("Locks") and attackPath.Locks:FindFirstChild("Granny") and attackPath.Locks.Granny:FindFirstChild("Attack") then
                 attackPath.Locks.Granny.Attack:Destroy()
             end
         end
-
-        print("Granny will now ignore you!") -- ✅ will print correctly now
+        print("Granny will now ignore you!")
     else
         ErrorLog.Text = "Error Log: Granny paths not found in Preset1 to Preset5."
     end
 end)
 
+-- ✅ Grandpa Ignores You
 createButton("Grandpa Ignores You", function()
-    local grandpaFolder = nil
-    local foundPresetIndex = nil  -- ✅ store which preset Grandpa was found in
-
+    local grandpaFolder, foundPresetIndex = nil, nil
     for i = 1, 5 do
-        local preset = workspace:FindFirstChild("Preset" .. i)
+        local preset = workspace:FindFirstChild("Preset"..i)
         if preset and preset:FindFirstChild("Locks") and preset.Locks:FindFirstChild("Grandpa") then
             grandpaFolder = preset.Locks.Grandpa
             foundPresetIndex = i
@@ -395,65 +321,43 @@ createButton("Grandpa Ignores You", function()
     end
 
     if grandpaFolder then
-        local toDestroy = {
-            "CameraJumpscare1",
-            "CameraJumpscare2",
-            "Jumpscare"
-        }
-
-        for _, name in ipairs(toDestroy) do
+        for _, name in ipairs({"CameraJumpscare1","CameraJumpscare2","Jumpscare"}) do
             local obj = grandpaFolder:FindFirstChild(name)
-            if obj then
-                obj:Destroy()
-            end
+            if obj then obj:Destroy() end
         end
-
-        -- ✅ Use foundPresetIndex safely here
         if foundPresetIndex then
-            local attackPath = workspace:FindFirstChild("Preset" .. foundPresetIndex)
+            local attackPath = workspace:FindFirstChild("Preset"..foundPresetIndex)
             if attackPath and attackPath:FindFirstChild("Locks") and attackPath.Locks:FindFirstChild("Grandpa") and attackPath.Locks.Grandpa:FindFirstChild("Attack") then
                 attackPath.Locks.Grandpa.Attack:Destroy()
             end
         end
-
-        print("Grandpa will now ignore you!") 
+        print("Grandpa will now ignore you!")
     else
         ErrorLog.Text = "Error Log: Grandpa paths not found in Preset1 to Preset5."
     end
 end)
 
+-- ✅ Remove Fall Animations
 createButton("Remove Fall Animations", function()
     local paths = {
-        workspace:FindFirstChild("GiveGUI")
-            and workspace.GiveGUI:FindFirstChild("ShowGUI")
-            and workspace.GiveGUI.ShowGUI:FindFirstChild("MainGUI")
-            and workspace.GiveGUI.ShowGUI.MainGUI:FindFirstChild("FallSystem"),
-
-        game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
-            and game.Players.LocalPlayer.PlayerGui:FindFirstChild("MainGUI")
-            and game.Players.LocalPlayer.PlayerGui.MainGUI:FindFirstChild("FallSystem")
+        workspace:FindFirstChild("GiveGUI") and workspace.GiveGUI:FindFirstChild("ShowGUI") and workspace.GiveGUI.ShowGUI:FindFirstChild("MainGUI") and workspace.GiveGUI.ShowGUI.MainGUI:FindFirstChild("FallSystem"),
+        PlayerGui:FindFirstChild("MainGUI") and PlayerGui.MainGUI:FindFirstChild("FallSystem")
     }
-
     for _, obj in pairs(paths) do
-        if obj then
-            obj:Destroy()
-        end
+        if obj then obj:Destroy() end
     end
-
     print("Fall animations successfully removed!")
-    game.StarterGui:SetCore("SendNotification", {
+    StarterGui:SetCore("SendNotification", {
         Title = "Removed Fall Animations!",
         Text = "Removes the falling animation system for smoother movement.",
         Duration = 5
     })
 end)
 
+-- ✅ God Mode
 createButton("God Mode", function()
-    local player = game:GetService("Players").LocalPlayer
-    local char = player.Character or workspace:FindFirstChild(player.Name)
-
+    local char = LocalPlayer.Character or workspace:FindFirstChild(LocalPlayer.Name)
     if char then
-        -- Optional God mode visual tweaks
         for _, part in pairs(char:GetDescendants()) do
             if part:IsA("BasePart") then
                 part.CanCollide = false
@@ -461,33 +365,24 @@ createButton("God Mode", function()
                 part.Transparency = 0.5
             end
         end
-
-        -- Change Humanoid name to avoid detection (if it exists)
         local humanoid = char:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.Name = "NotHumanoid"
-        end
+        if humanoid then humanoid.Name = "NotHumanoid" end
 
-        -- Unanchor root part if found
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if root then
-            root.Anchored = false
+        local function safeDestroy(obj) if obj then obj:Destroy() end end
+        local charInWorkspace = workspace:FindFirstChild(LocalPlayer.Name)
+        if charInWorkspace then
+            safeDestroy(charInWorkspace:FindFirstChild("Health"))
+            local hrp = charInWorkspace:FindFirstChild("HumanoidRootPart")
+            if hrp then safeDestroy(hrp:FindFirstChild("FreeFalling")) end
+            local animate = charInWorkspace:FindFirstChild("Animate")
+            if animate then safeDestroy(animate:FindFirstChild("fall")) end
         end
-
-        -- Destroy target paths dynamically
-        local function safeDestroy(path)
-            if path then
-                path:Destroy()
-            end
-        end
-
-        safeDestroy(workspace:FindFirstChild(player.Name):FindFirstChild("Health"))
-        safeDestroy(workspace:FindFirstChild(player.Name):FindFirstChild("HumanoidRootPart"):FindFirstChild("FreeFalling"))
-        safeDestroy(workspace:FindFirstChild(player.Name):FindFirstChild("Animate"):FindFirstChild("fall"))
-        safeDestroy(player:FindFirstChild("PlayerGui"):FindFirstChild("MainGUI"):FindFirstChild("FallSystem"))
+        local mainGui = PlayerGui:FindFirstChild("MainGUI")
+        if mainGui then safeDestroy(mainGui:FindFirstChild("FallSystem")) end
     end
 end)
 
+-- ✅ Full Bright
 createButton("Full Bright", function()
     Lighting.Ambient = Color3.new(1, 1, 1)
     Lighting.Brightness = 3
@@ -495,6 +390,7 @@ createButton("Full Bright", function()
     Lighting.ClockTime = 14
 end)
 
+-- ✅ Unlock Camera
 createButton("Unlock Camera", function()
     LocalPlayer.CameraMaxZoomDistance = 1000
     LocalPlayer.CameraMinZoomDistance = 0.5
