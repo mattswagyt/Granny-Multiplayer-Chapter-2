@@ -272,7 +272,7 @@ createButton("Item ESP", function()
     end
 end)
 
--- ✅ Get All Items
+-- ✅ Get All Items + Extra Items
 createButton("Get All Items", function()
     local player = LocalPlayer
     local backpack = player:FindFirstChild("Backpack") or Instance.new("Folder", player)
@@ -285,29 +285,80 @@ createButton("Get All Items", function()
 
     local function obtainItem(item)
         if not item then return end
+
         if item:FindFirstChild("InteractRemote") then
             item.InteractRemote:FireServer(player)
             print("Picked up via InteractRemote:", item.Name)
+
         elseif item:IsA("Tool") then
             local clone = item:Clone()
             clone.Parent = backpack
             print("Manually cloned tool:", item.Name)
+
         else
             print("⚠️ Unable to pick up item:", item.Name)
         end
+
         task.wait(0.1)
     end
 
+    -- 🔍 Generic item collector for any instance path
+    local function tryGet(path)
+        local item = path
+        if item then obtainItem(item) end
+    end
+
+    -- 🔍 Loop all Preset1–10, MiniPreset1–10, MeatPreset1–10
     for i = 1, 10 do
         local preset = workspace:FindFirstChild("Preset"..i)
+        local mini = workspace:FindFirstChild("MiniPreset"..i)
+        local meat = workspace:FindFirstChild("MeatPreset"..i)
+
+        -- 🔹 Get normal preset items
         if preset then
             for _, item in pairs(preset:GetChildren()) do
                 if item:FindFirstChild("InteractRemote") then
                     obtainItem(item)
                 end
             end
+
+            -- Shotgun
+            if preset:FindFirstChild("Locks") and preset.Locks:FindFirstChild("KeyCard Door") then
+                local shotgun = preset.Locks["KeyCard Door"]:FindFirstChild("Shotgun")
+                if shotgun then obtainItem(shotgun) end
+            end
+
+            -- Book
+            if preset:FindFirstChild("Locks") and preset.Locks:FindFirstChild("Drawer") then
+                local book = preset.Locks.Drawer:FindFirstChild("Book")
+                if book then obtainItem(book) end
+            end
+        end
+
+        -- 🔹 MiniPreset grenades + picture pieces
+        if mini then
+            local grenadeBox = mini:FindFirstChild("GrenadeBox")
+            if grenadeBox then
+                obtainItem(grenadeBox:FindFirstChild("Grenade1"))
+                obtainItem(grenadeBox:FindFirstChild("Grenade2"))
+                obtainItem(grenadeBox:FindFirstChild("Grenade3"))
+            end
+
+            obtainItem(mini:FindFirstChild("A piece of a picture (1)"))
+            obtainItem(mini:FindFirstChild("A piece of a picture (2)"))
+            obtainItem(mini:FindFirstChild("A piece of a picture (3)"))
+        end
+
+        -- 🔹 MeatPreset Meat
+        if meat then
+            local meatItem = meat:FindFirstChild("Meat")
+            if meatItem then obtainItem(meatItem) end
         end
     end
+
+    -- 🔹 Get Slendrina Mask (always the same location)
+    local mask = workspace:FindFirstChild("General Items") and workspace["General Items"]:FindFirstChild("SlendrinaMask")
+    if mask then obtainItem(mask) end
 end)
 
 createButton("Infinite Ammo", function()
@@ -470,6 +521,22 @@ createButton("God Mode", function()
         local mainGui = PlayerGui:FindFirstChild("MainGUI")
         if mainGui then safeDestroy(mainGui:FindFirstChild("FallSystem")) end
     end
+end)
+
+createButton("TP to Spawn", function()
+    LocalPlayer.Character:PivotTo(CFrame.new(-374, 4, 31))
+end)
+
+createButton("TP to Boat", function()
+    LocalPlayer.Character:PivotTo(CFrame.new(-366, -9, 13))
+end)
+
+createButton("TP to Front Door", function()
+    LocalPlayer.Character:PivotTo(CFrame.new(-364, 11, 27))
+end)
+
+createButton("Helicopter Pad", function()
+    LocalPlayer.Character:PivotTo(CFrame.new(-358, 27, 24))
 end)
 
 -- ✅ Full Bright
