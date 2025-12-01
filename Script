@@ -1,21 +1,9 @@
--- Roblox Lua Script for "Granny Multiplayer - Chapter 2" Map (By BMF)
--- Script handles a draggable UI with multiple functionalities
-
--- Services
-local Players = game:GetService("Players")
-local Lighting = game:GetService("Lighting")
-local StarterGui = game:GetService("StarterGui")
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
 -- Create UI Elements
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
 local ErrorLog = Instance.new("TextLabel")
+local ScrollFrame = Instance.new("ScrollingFrame")
 local UIListLayout = Instance.new("UIListLayout")
 
 -- UI Properties
@@ -29,8 +17,8 @@ MainFrame.Size = UDim2.new(0, 300, 0, 400)
 MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = true
 
+-- Title
 Title.Parent = MainFrame
 Title.Text = "Granny Multiplayer - Chapter 2 (By BMF)"
 Title.Size = UDim2.new(1, 0, 0, 30)
@@ -39,9 +27,11 @@ Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 18
 
+-- Error Log
 ErrorLog.Parent = MainFrame
 ErrorLog.Text = "Error Log: None"
-ErrorLog.Size = UDim2.new(1, 0, 0, 30)
+ErrorLog.Size = UDim2.new(1, 0, 0, 40)
+ErrorLog.Position = UDim2.new(0, 0, 0, 30)
 ErrorLog.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 ErrorLog.TextColor3 = Color3.fromRGB(255, 85, 85)
 ErrorLog.Font = Enum.Font.SourceSans
@@ -49,9 +39,23 @@ ErrorLog.TextSize = 14
 ErrorLog.TextWrapped = true
 ErrorLog.TextYAlignment = Enum.TextYAlignment.Top
 
-UIListLayout.Parent = MainFrame
+-- ScrollingFrame for buttons
+ScrollFrame.Parent = MainFrame
+ScrollFrame.Size = UDim2.new(1, -10, 1, -75) 
+ScrollFrame.Position = UDim2.new(0, 5, 0, 70)
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollFrame.ScrollBarThickness = 6
+ScrollFrame.BackgroundTransparency = 1
+
+-- Layout inside scroll area
+UIListLayout.Parent = ScrollFrame
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayout.Padding = UDim.new(0, 5)
+
+-- Auto-expand scroll size when buttons are added
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ScrollFrame.CanvasSize = UDim2.fromOffset(0, UIListLayout.AbsoluteContentSize.Y)
+end)
 
 -- Toggle UI with Delete key
 UIS.InputBegan:Connect(function(input, processed)
@@ -63,17 +67,17 @@ end)
 -- Function to Create Buttons
 local function createButton(name, callback)
     local Button = Instance.new("TextButton")
-    Button.Parent = MainFrame
+    Button.Parent = ScrollFrame
     Button.Text = name
-    Button.Size = UDim2.new(1, 0, 0, 30)
+    Button.Size = UDim2.new(1, 0, 0, 35)
     Button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     Button.TextColor3 = Color3.fromRGB(255, 255, 255)
     Button.Font = Enum.Font.SourceSans
     Button.TextSize = 16
+
     Button.MouseButton1Click:Connect(function()
         pcall(callback)
     end)
-    return Button
 end
 
 -- Loaders
@@ -210,35 +214,49 @@ createButton("Item ESP", function()
         "Duct tape","Gasoline can","Glass fuse","Hand wheel","Helicopter key",
         "Padlock key","Safe key","Spark plug","Special key","Stun gun","Weapon key","Wrench"
     }
-    local color = Color3.fromRGB(0, 170, 255)
-    local foundCount = 0
 
-    for i = 1, 10 do
-        local preset = workspace:FindFirstChild("Preset"..i)
+     for i = 1, 5 do
+        local preset = workspace:FindFirstChild("Preset" .. i)
         if preset then
-            for _, itemName in ipairs(itemNames) do
-                local item = preset:FindFirstChild(itemName, true)
-                if item and (item:IsA("Part") or item:IsA("Model")) then
+            for _, name in ipairs(itemNames) do
+                local item = preset:FindFirstChild(name)
+                if item then
+                    -- Check for and apply Highlight
                     if not item:FindFirstChildOfClass("Highlight") then
                         local highlight = Instance.new("Highlight")
                         highlight.Name = "ItemESP"
-                        highlight.Parent = item
                         highlight.Adornee = item
-                        highlight.FillTransparency = 1
+                        highlight.Parent = item
+                        highlight.FillTransparency = 1 -- Outline only
                         highlight.OutlineTransparency = 0
-                        highlight.OutlineColor = color
-                        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                        highlight.OutlineColor = Color3.fromRGB(0, 255, 0) -- Green
+                        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- X-ray
                     end
-                    if not item:FindFirstChild("NameTag") then
-                        createNameTag(item, itemName, color)
+
+                    -- Check for and apply BillboardGui for name text
+                    if not item:FindFirstChild("ItemLabel") then
+                        local billboard = Instance.new("BillboardGui")
+                        billboard.Name = "ItemLabel"
+                        billboard.Size = UDim2.new(0, 200, 0, 50)
+                        billboard.AlwaysOnTop = true
+                        billboard.StudsOffset = Vector3.new(0, 2, 0)
+                        billboard.Adornee = item
+                        billboard.Parent = item
+
+                        local label = Instance.new("TextLabel")
+                        label.Size = UDim2.new(1, 0, 1, 0)
+                        label.BackgroundTransparency = 1
+                        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        label.TextStrokeTransparency = 0
+                        label.Text = name
+                        label.TextScaled = true
+                        label.Font = Enum.Font.GothamBold
+                        label.Parent = billboard
                     end
-                    createTracer(item, color)
-                    foundCount += 1
                 end
             end
         end
     end
-    print("Item ESP applied to " .. foundCount .. " items.")
 end)
 
 -- ✅ Get All Items
@@ -276,6 +294,65 @@ createButton("Get All Items", function()
                 end
             end
         end
+    end
+end)
+
+createButton("Infinite Ammo", function()
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local ammo1 = LocalPlayer.Backpack:FindFirstChild("StunGunAmmo")
+    local ammo2 = LocalPlayer.Backpack:FindFirstChild("ShotgunAmmo")
+
+    if ammo1 or ammo2 then
+        -- Keep ammo at 1 forever
+        task.spawn(function()
+            while true do
+                if ammo1 and ammo1.Value ~= 1 then
+                    ammo1.Value = 1
+                end
+                if ammo2 and ammo2.Value ~= 1 then
+                    ammo2.Value = 1
+                end
+                task.wait(0.1)
+            end
+        end)
+
+        print("Infinite Ammo enabled!")
+
+        -- Updated Notification
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "🔫 Infinite Ammo Enabled",
+            Text = "Your stun gun & shotgun ammo will both stay at 1 forever.",
+            Duration = 5
+        })
+    else
+        warn("Error: StunGunAmmo or ShotgunAmmo not found in LocalPlayer.Backpack")
+    end
+end)
+
+createButton("No Beartraps", function()
+    local found = false
+
+    for i = 1, 10 do
+        local preset = workspace:FindFirstChild("Preset" .. i)
+        if preset and preset:FindFirstChild("Locks") then
+            local locks = preset.Locks
+            if locks:FindFirstChild("Granny") then
+                local granny = locks.Granny
+                local beartrap = granny:FindFirstChild("BeartrapSpawn")
+
+                if beartrap then
+                    beartrap:Destroy()
+                    ErrorLog.Text = "Error Log: Beartraps removed! (Preset" .. i .. ")"
+                    found = true
+                    break
+                end
+            end
+        end
+    end
+
+    if not found then
+        ErrorLog.Text = "Error Log: BeartrapSpawn not found in any preset"
     end
 end)
 
