@@ -158,6 +158,65 @@ local function createNameTag(target, text, color)
     label.Parent = billboard
 end
 
+createButton("Player ESP", function()
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+
+    local ESP_COLOR = Color3.fromRGB(0, 255, 0) -- Green
+
+    -- Function to ESP a single character model
+    local function applyPlayerESP(character, player)
+        if not character then return end
+        if character:FindFirstChild("HumanoidRootPart") == nil then return end
+
+        -- Prevent duplicate ESP
+        if character:FindFirstChild("PlayerESP_Highlight") then return end
+
+        -- Highlight
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "PlayerESP_Highlight"
+        highlight.Adornee = character
+        highlight.FillColor = ESP_COLOR
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.Parent = character
+
+        -- Tracer
+        createTracer(character, ESP_COLOR)
+
+        -- Name tag
+        createNameTag(character, player.Name, ESP_COLOR)
+    end
+
+    -- Apply ESP for all current players
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            if player.Character then
+                applyPlayerESP(player.Character, player)
+            end
+        end
+    end
+
+    -- When a new character spawns, apply ESP again
+    Players.PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(function(char)
+            task.wait(1)
+            applyPlayerESP(char, player)
+        end)
+    end)
+
+    -- Also detect respawns for already-joined players
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            player.CharacterAdded:Connect(function(char)
+                task.wait(1)
+                applyPlayerESP(char, player)
+            end)
+        end
+    end
+end)
+
 -- ✅ Granny ESP
 createButton("Granny ESP", function()
     local granny = nil
@@ -537,6 +596,18 @@ end)
 
 createButton("Helicopter Pad", function()
     LocalPlayer.Character:PivotTo(CFrame.new(-358, 27, 24))
+end)
+
+createButton("Door Escape", function()
+    LocalPlayer.Character:PivotTo(CFrame.new(-362.712097, 116.578186, 27.5977001, 1, 0, 0, 0, 1, 0, 0, 0, 1))
+end)
+
+createButton("Boat Escape", function()
+    LocalPlayer.Character:PivotTo(CFrame.new(-380.002625, 117.425171, 27.4636917, 1, 0, 0, 0, 1, 0, 0, 0, 1))
+end)
+
+createButton("Helicopter Escape", function()
+    LocalPlayer.Character:PivotTo(CFrame.new(-396.738953, 117.425171, 27.4636917, 1, 0, 0, 0, 1, 0, 0, 0, 1))
 end)
 
 -- ✅ Full Bright
